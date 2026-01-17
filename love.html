@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>For My Baby 💖</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Fredoka:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --pink-dark: #ff6b9d;
+            --pink-mid: #ff85a2;
+            --pink-soft: #ffdae9;
+            --pink-bg: #fff5f8;
+            --text-color: #8a4a5e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background-color: var(--pink-bg);
+            background-image: radial-gradient(rgba(255, 107, 157, 0.2) 2px, transparent 2px);
+            background-size: 35px 35px;
+            color: var(--text-color);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* --- UI Elements --- */
+        #progression-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 12px;
+            background: white;
+            border-radius: 10px;
+            z-index: 1000;
+            border: 2px solid var(--pink-soft);
+            overflow: hidden;
+            display: none;
+        }
+
+        #progression-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--pink-dark);
+            transition: width 0.5s ease;
+        }
+
+        #music-control {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 50px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border: 2px solid var(--pink-soft);
+        }
+
+        /* --- Sections --- */
+        .page {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.6s ease-in-out;
+            transform: scale(0.95);
+        }
+
+        .page.active {
+            opacity: 1;
+            visibility: visible;
+            transform: scale(1);
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(5px);
+            padding: 40px;
+            border-radius: 40px;
+            box-shadow: 0 15px 35px rgba(255, 107, 157, 0.2);
+            border: 4px solid white;
+            max-width: 700px;
+            width: 90%;
+            text-align: center;
+        }
+
+        h1 { font-family: 'Dancing Script', cursive; font-size: 4rem; color: var(--pink-dark); margin-bottom: 20px; }
+        p { font-size: 1.2rem; line-height: 1.5; margin-bottom: 25px; }
+
+        .btn {
+            background: var(--pink-dark);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 5px 0px #d44d7b;
+        }
+
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 8px 0px #d44d7b; }
+        .btn:active { transform: translateY(2px); box-shadow: 0 2px 0px #d44d7b; }
+
+        /* --- Particles --- */
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            animation: floatUp 2s forwards ease-out;
+            font-weight: bold;
+            z-index: 10000;
+        }
+
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-100px); opacity: 0; }
+        }
+
+        /* --- Game: Heart Jar --- */
+        #jar-container {
+            width: 150px;
+            height: 200px;
+            border: 5px solid var(--pink-mid);
+            border-top: none;
+            border-radius: 0 0 40px 40px;
+            position: relative;
+            margin: 20px auto;
+            background: rgba(255,255,255,0.5);
+            overflow: hidden;
+        }
+        .jar-heart { position: absolute; font-size: 20px; }
+
+        /* --- Game: Maze --- */
+        #maze-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 40px);
+            grid-template-rows: repeat(8, 40px);
+            gap: 2px;
+            background: var(--pink-soft);
+            padding: 5px;
+            border-radius: 10px;
+            margin: 0 auto;
+        }
+        .cell { width: 40px; height: 40px; background: white; border-radius: 4px; }
+        .wall { background: var(--pink-mid); }
+        .player { background: var(--pink-dark); display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+        .player::after { content: '🌸'; font-size: 20px; }
+        .goal { background: #ffeb3b; display: flex; align-items: center; justify-content: center; }
+        .goal::after { content: '❤️'; font-size: 20px; }
+
+        /* --- Quiz --- */
+        .quiz-opt {
+            width: 100%;
+            background: white;
+            border: 2px solid var(--pink-soft);
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .quiz-opt:hover { background: var(--pink-soft); }
+
+    </style>
+</head>
+<body onclick="spawnText(event)">
+
+    <div id="progression-container"><div id="progression-bar"></div></div>
+
+    <div id="music-control">
+        <span>🎵 Tsunami - NIKI</span>
+        <button onclick="toggleMusic()" style="border:none; background:none; cursor:pointer; font-size: 1.2rem;">🔊</button>
+    </div>
+
+    <div id="player-container" style="display:none"><div id="player"></div></div>
+
+    <div id="content">
+
+        <section class="page active" id="p0">
+            <h1>Hi Princess! 🌸</h1>
+            <p>I made this for you, my everything.</p>
+            <div style="display: flex; gap: 20px;">
+                <button class="btn" onclick="startJourney()">START</button>
+                <button class="btn" style="background:#8a4a5e; box-shadow: 0 5px 0px #5e3240;" onclick="showCredits()">CREDITS</button>
+            </div>
+        </section>
+
+        <section class="page" id="p_credits">
+            <div class="card">
+                <h1>Credits</h1>
+                <p><strong>Jest</strong> - dev, coding and idea.</p>
+                <button class="btn" onclick="goTo(0)">Back to Menu</button>
+            </div>
+        </section>
+
+        <section class="page" id="p1">
+            <div class="card">
+                <h1>Catch 10 Hearts!</h1>
+                <p>Click the bouncing hearts to proceed!</p>
+                <div id="catch-area" style="height: 300px; position: relative; background: var(--pink-bg); border-radius: 20px; overflow: hidden;"></div>
+                <h2 style="margin-top:10px">Score: <span id="catch-score">0</span>/10</h2>
+            </div>
+        </section>
+
+        <section class="page" id="p2">
+            <div class="card">
+                <h1>The Love Maze</h1>
+                <p>Help the cherry blossom find the heart! (Use Arrow Keys or Buttons)</p>
+                <div id="maze-grid"></div>
+                <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(3, 1fr); width: 150px; gap: 5px; margin-left: auto; margin-right: auto;">
+                    <div style="grid-column: 2"><button class="btn" style="padding: 10px;" onclick="moveMaze(0, -1)">↑</button></div>
+                    <button class="btn" style="padding: 10px; grid-row: 2; grid-column: 1" onclick="moveMaze(-1, 0)">←</button>
+                    <button class="btn" style="padding: 10px; grid-row: 2; grid-column: 2" onclick="moveMaze(0, 1)">↓</button>
+                    <button class="btn" style="padding: 10px; grid-row: 2; grid-column: 3" onclick="moveMaze(1, 0)">→</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="page" id="p3">
+            <div class="card">
+                <h1 id="q-title">Quiz Time!</h1>
+                <p id="q-text"></p>
+                <div id="q-options"></div>
+            </div>
+        </section>
+
+        <section class="page" id="p4">
+            <div class="card">
+                <h1>Fill the Jar!</h1>
+                <p>Click the jar to fill it with my love (25 times!)</p>
+                <div id="jar-container" onclick="fillJar()"></div>
+                <h2>Hearts: <span id="jar-count">0</span>/25</h2>
+            </div>
+        </section>
+
+        <section class="page" id="p5">
+            <div class="card">
+                <h1>Wait... 💖</h1>
+                <p>"I wrote these letters before a week of our monthsary, some might be short i'm sorry but just know that i love you alot."</p>
+                <button class="btn" onclick="nextPhase()">Read them now ✨</button>
+            </div>
+        </section>
+
+        <section class="page" id="p6">
+            <div class="card"><h1>Letter #1</h1><p>The day you introduced me to NIKI, my world changed. I love you.</p><button class="btn" onclick="nextPhase()">Next</button></div>
+        </section>
+        <section class="page" id="p7">
+            <div class="card"><h1>Letter #2</h1><p>Every time we play Valorant, I feel like I'm the luckiest player alive.</p><button class="btn" onclick="nextPhase()">Next</button></div>
+        </section>
+        <section class="page" id="p8">
+            <div class="card"><h1>Letter #3</h1><p>Your smile is the only thing I need to see to have a great day.</p><button class="btn" onclick="nextPhase()">Next</button></div>
+        </section>
+        <section class="page" id="p9">
+            <div class="card"><h1>Letter #4</h1><p>I love calling you Zia, Seyang, and Baby. You're my favorite everything.</p><button class="btn" onclick="nextPhase()">Next</button></div>
+        </section>
+        <section class="page" id="p10">
+            <div class="card"><h1>Letter #5</h1><p>Thank you for being you. You're my best friend and my partner.</p><button class="btn" onclick="nextPhase()">Next</button></div>
+        </section>
+        <section class="page" id="p11">
+            <div class="card"><h1>Letter #6</h1><p>I promise to stay by your side through every "Tsunami" that comes our way.</p><button class="btn" onclick="nextPhase()">Next</button></div>
+        </section>
+        <section class="page" id="p12">
+            <div class="card"><h1>Letter #7</h1><p>Happy Monthsary, my beautiful girl. Forever to go!</p><button class="btn" onclick="goTo(13)">Finish 💖</button></div>
+        </section>
+
+        <section class="page" id="p13">
+            <h1>You Reached the End! 🏆</h1>
+            <p>But our love is just beginning. I love you Zia!</p>
+            <button class="btn" onclick="location.reload()">Restart Journey 🔄</button>
+        </section>
+
+    </div>
+
+    <script>
+        let currentStep = 0;
+        const totalSteps = 13;
+
+        // --- NAVIGATION ---
+        function goTo(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const target = (typeof id === 'number') ? document.getElementById('p' + id) : document.getElementById(id);
+            target.classList.add('active');
+            
+            // Progress Bar
+            if(id > 0 && id < 13) {
+                document.getElementById('progression-container').style.display = 'block';
+                document.getElementById('progression-bar').style.width = (id / 12 * 100) + '%';
+            } else {
+                document.getElementById('progression-container').style.display = 'none';
+            }
+
+            if(id === 1) startCatchGame();
+            if(id === 2) initMaze();
+            if(id === 3) startQuiz();
+        }
+
+        function nextPhase() { currentStep++; goTo(currentStep); }
+        function showCredits() { goTo('p_credits'); }
+        function startJourney() { 
+            currentStep = 1; 
+            goTo(1); 
+            if(player) player.playVideo();
+        }
+
+        // --- PARTICLES ---
+        function spawnText(e) {
+            const words = ["< Seyang! 3", "< Zia! 3", "< Baby! 3", "💖", "🌸", "❤️"];
+            const p = document.createElement('div');
+            p.className = 'particle';
+            p.innerText = words[Math.floor(Math.random() * words.length)];
+            p.style.left = e.clientX + 'px';
+            p.style.top = e.clientY + 'px';
+            p.style.color = `hsl(${Math.random() * 50 + 330}, 100%, 65%)`;
+            p.style.fontSize = Math.random() * 10 + 15 + 'px';
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 2000);
+        }
+
+        // --- GAME 1: CATCH HEARTS ---
+        let score1 = 0;
+        function startCatchGame() {
+            const area = document.getElementById('catch-area');
+            const loop = setInterval(() => {
+                if(score1 >= 10 || currentStep !== 1) { clearInterval(loop); return; }
+                const h = document.createElement('div');
+                h.innerText = '💗';
+                h.style.position = 'absolute';
+                h.style.cursor = 'pointer';
+                h.style.fontSize = '30px';
+                h.style.left = Math.random() * 90 + '%';
+                h.style.top = Math.random() * 90 + '%';
+                h.onclick = () => { score1++; document.getElementById('catch-score').innerText = score1; h.remove(); if(score1 >= 10) nextPhase(); };
+                area.appendChild(h);
+                setTimeout(() => h.remove(), 1500);
+            }, 800);
+        }
+
+        // --- GAME 2: MAZE ---
+        let playerPos = { x: 0, y: 0 };
+        const mazeLayout = [
+            [0,0,1,0,0,0,0,0],
+            [1,0,1,0,1,1,1,0],
+            [0,0,0,0,0,0,1,0],
+            [0,1,1,1,1,0,1,0],
+            [0,0,0,1,0,0,0,0],
+            [1,1,0,1,0,1,1,1],
+            [0,0,0,0,0,0,0,0],
+            [1,1,1,1,1,1,1,0],
+        ];
+        function initMaze() {
+            const grid = document.getElementById('maze-grid');
+            grid.innerHTML = '';
+            playerPos = { x: 0, y: 0 };
+            for(let y=0; y<8; y++) {
+                for(let x=0; x<8; x++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell' + (mazeLayout[y][x] ? ' wall' : '');
+                    cell.id = `c-${x}-${y}`;
+                    grid.appendChild(cell);
+                }
+            }
+            document.getElementById('c-0-0').classList.add('player');
+            document.getElementById('c-7-7').classList.add('goal');
+        }
+        function moveMaze(dx, dy) {
+            let newX = playerPos.x + dx;
+            let newY = playerPos.y + dy;
+            if(newX >=0 && newX < 8 && newY >= 0 && newY < 8 && !mazeLayout[newY][newX]) {
+                document.getElementById(`c-${playerPos.x}-${playerPos.y}`).classList.remove('player');
+                playerPos = { x: newX, y: newY };
+                document.getElementById(`c-${newX}-${newY}`).classList.add('player');
+                if(newX === 7 && newY === 7) setTimeout(() => nextPhase(), 300);
+            }
+        }
+
+        // --- GAME 3: QUIZ ---
+        const questions = [
+            { q: "When's my birthday?", a: ["January 5", "December 7", "June 22", "January 3"], c: 3 },
+            { q: "What is my favourite valorant agent?", a: ["Neon", "Chamber", "Clove", "Jett"], c: 3 },
+            { q: "What is my favourite phrases?", a: ["Big horse meat", "Sierra Madre", "67", "All of the above"], c: 3 },
+            { q: "What is my favorite animal?", a: ["You", "Cats", "Dogs", "Penguins"], c: 0, m: "I love all of them but i love you more" },
+            { q: "What is the first song you introduced to me?", a: ["Tsunami - Niki", "Autumn - Niki", "67 Rizzmas", "Big horsemeat"], c: 0 }
+        ];
+        let qIdx = 0;
+        function startQuiz() {
+            if(qIdx >= questions.length) { nextPhase(); return; }
+            const data = questions[qIdx];
+            document.getElementById('q-text').innerText = data.q;
+            const container = document.getElementById('q-options');
+            container.innerHTML = '';
+            data.a.forEach((opt, i) => {
+                const b = document.createElement('button');
+                b.className = 'quiz-opt';
+                b.innerText = opt;
+                b.onclick = () => {
+                    if(i === data.c) { if(data.m) alert(data.m); qIdx++; startQuiz(); }
+                    else alert("Wrong, try again baby! ❤️");
+                };
+                container.appendChild(b);
+            });
+        }
+
+        // --- GAME 4: JAR ---
+        let jarHits = 0;
+        function fillJar() {
+            jarHits++;
+            document.getElementById('jar-count').innerText = jarHits;
+            const h = document.createElement('div');
+            h.className = 'jar-heart';
+            h.innerText = '❤️';
+            h.style.left = Math.random() * 80 + 10 + '%';
+            h.style.bottom = (jarHits * 4) + 'px';
+            document.getElementById('jar-container').appendChild(h);
+            if(jarHits >= 25) setTimeout(() => nextPhase(), 500);
+        }
+
+        // --- YOUTUBE API ---
+        var tag = document.createElement('script');
+        tag.src = "https://www.youtube.com/iframe_api";
+        var firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        var player;
+        function onYouTubeIframeAPIReady() {
+            player = new YT.Player('player', {
+                height: '0', width: '0',
+                videoId: 'KZG1PO9Crh8',
+                playerVars: { 'autoplay': 1, 'loop': 1, 'playlist': 'KZG1PO9Crh8' },
+                events: { 'onReady': (e) => e.target.setVolume(50) }
+            });
+        }
+        function toggleMusic() {
+            const s = player.getPlayerState();
+            if(s == 1) player.pauseVideo(); else player.playVideo();
+        }
+
+        // Arrow Key Support for Maze
+        window.addEventListener('keydown', (e) => {
+            if(currentStep === 2) {
+                if(e.key === 'ArrowUp') moveMaze(0, -1);
+                if(e.key === 'ArrowDown') moveMaze(0, 1);
+                if(e.key === 'ArrowLeft') moveMaze(-1, 0);
+                if(e.key === 'ArrowRight') moveMaze(1, 0);
+            }
+        });
+    </script>
+</body>
+</html>
